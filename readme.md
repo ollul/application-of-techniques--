@@ -1,1 +1,0 @@
-Application of the techniques "Allocation of calculations" and "Improvement of the structure of actions"
