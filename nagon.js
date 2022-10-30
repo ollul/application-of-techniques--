@@ -1,4 +1,3 @@
-
 function Check(input) 
 {
     input.value = input.value.replace(/\D/g, "");
@@ -15,15 +14,13 @@ $(function() {
         $("<option value='" + dor_array[i][0] + "'>" + dor_array[i][0] + " - " + dor_array[i][1] + "</option>").appendTo("#dor-select");
     }
 
-    $("<option value='0'>Все</option>").appendTo("#depo-select");
+    $("<option value='0'>Все</option>").appendTo(["#depo-select", "#skp-select"]);
 
     for (var i = 0; i < depo_array.length; i++) {
         if (depo_array[i][2] == 1) {
             $("<option value='" + depo_array[i][0] + "'>" + depo_array[i][0] + " - " + depo_array[i][1] + "</option>").appendTo("#depo-select");
         }
     }
-	
-	$("<option value='0'>Все</option>").appendTo("#skp-select");
     
     for (var i = 0; i < skp_array.length; i++) {
     	$("<option value='" + skp_array[i][2] + "'>" + skp_array[i][0] + " - " + skp_array[i][1] + "</option>").appendTo("#skp-select");
@@ -103,9 +100,11 @@ $(function() {
 function addOption(idSelect, val, txt)                                  // функция, формирующая набор options
 { 
 	var OptionNew = document.createElement('option');
-	OptionNew.value = val;
-	OptionNew.title = txt;
-	OptionNew.text  = txt;
+	OptionNew.push({
+		value: val,
+		title: txt,
+		text: txt
+	})
 	try 
 	{
 		idSelect.add(OptionNew,null);
@@ -119,8 +118,7 @@ function addOption(idSelect, val, txt)                                  // фу�
 function dtHTML2dtDB2(sdate)                                            // переводит дату в нужный формат
 {
 	/* dd.mm.yyyy -> yyyy-mm-dd */
-	var sdt = sdate.substring(6,10) + '-' + sdate.substring(3,5) + '-' + sdate.substring(0,2); 
-	return sdt; 
+	return (sdate.substring(6,10) + '-' + sdate.substring(3,5) + '-' + sdate.substring(0,2));
 }
 
 function showReport()             // при нажатии "показать справку"
@@ -128,12 +126,9 @@ function showReport()             // при нажатии "показать с�
 	if( imgRptView.className == 'img' )
 	{
 		showParams();
-		imgExcel.className = 'img';
-		imgPrint.className = 'img';	
-		DoExel.disabled=false;
-		DoPrint.disabled=false;
-		divContentH.style.visibility = 'hidden';
-		divContentR.style.visibility = 'hidden';
+		showExPr();
+		showDivContent(isHidden, divContentH);
+		showDivContent(isHidden, divContentR);
 		divWaitShow(1);
 		formRepHref(); 
 	}
@@ -145,6 +140,10 @@ function showReport()             // при нажатии "показать с�
    return year + '-' + month + '-' + day;
 }
 
+function windowAlert(text) {
+   return alert(text);
+}
+
 function formRepHref()           // формирование ссылки с параметрами
 {
 	var date1 = new Date($('#date_from').val().substr(6, 4), parseFloat($('#date_from').val().substr(3, 2), 10) - 1, $('#date_from').val().substr(0, 2));
@@ -153,22 +152,22 @@ function formRepHref()           // формирование ссылки с п�
     var rez = Math.floor((date2 - date1) / one_day) + 1; // разница для 3 мес
 	
 	if ($('#dor-select').val() != 0 && rez > 93 && $('#otch-select').val() == 3) {
-		alert('По всей сети период ограничен 3 месяцами');
+		windowAlert('По всей сети период ограничен 3 месяцами');
 		return;
     }
 	
 	if ($('#dor-select').val() != -1 && $('#depo-select').val() == 0 && rez > 93) {
-		alert('По дороге период ограничен 3 месяцами');
+		windowAlert('По дороге период ограничен 3 месяцами');
 		return;
     }
 	
     if ($('#dor-select').val() != -1 && $('#depo-select').val() != 0 && rez > 93) {
-		alert('По депо период ограничен 3 месяцами');
+		windowAlert('По депо период ограничен 3 месяцами');
 		return;
     }
 	
 	if ($('#nagon-input').val() == 0) {
-		alert('Введите нагон >= 1 минуты');
+		windowAlert('Введите нагон >= 1 минуты');
 		return;
     }
    
@@ -286,7 +285,7 @@ function startDownload(callBack,url)              // начало загрузк
 		req.onreadystatechange=function()  { if (req.readyState==4) callBack(req,url);};
 		req.send(null);
 	}
-	else alert('Браузер не поддерживает технологию AJAX');
+	else windowAlert('Браузер не поддерживает технологию AJAX');
 }
 
 function endDownload(content,url)               //конец
@@ -327,8 +326,18 @@ function afterDownload()
 	        addRow2Table('rptTblM', 'Нет данных', 'tdNoData', 14);
 			hideExPr();
 		}
-		divContentH.style.visibility = 'visible';
-		divContentR.style.visibility = 'visible';
+		showDivContent(isVisible, divContentH);
+		showDivContent(isVisible, divContentR);
+	}
+}
+
+showDivContent(isVisible, idElem) 
+{
+	if (isVisible) {
+		idElem.style.visibility = 'visible';
+	}
+	else {
+		idElem.style.visibility = 'hidden';
 	}
 }
 
@@ -344,6 +353,14 @@ function addRow2Table(tblName,tdHTML,tdClass,tdColSpan)    //добавлени�
 	td.className = tdClass;
 }
 
+function showExPr()   // показ кнопок печати и экспорта в эксель
+{
+	imgExcel.className='imgD';
+	imgPrint.className='imgD';	
+	DoExel.disabled=false;
+	DoPrint.disabled=false;
+}
+
 function hideExPr()   // скрытие кнопок печати и экспорта в эксель
 {
 	imgExcel.className='imgD';
@@ -352,13 +369,13 @@ function hideExPr()   // скрытие кнопок печати и экспо�
 	DoPrint.disabled=true;
 }
 
-function OpenExcel()   // открытие Exel
+function OpenExcel()   // открытие Excel
 { 
 	divWaitShow(0); 
 	setTimeout(doSave, 500); 
 } 
 
-function doSave()   // попытка создать Exel
+function doSave()   // попытка создать Excel
 { 
 	try { ExlPrn(0); }                                                  // function ExlPrn(prn) - своя функция для каждого отчета, prn=1 - печать 
 	catch(e) 
@@ -420,7 +437,6 @@ function ExlPrn(prn)
 		sh.Cells(2, 1).Characters.Font.Name = 'Arial';
 		sh.Cells(2, 1).Characters.Font.Size = 10;
 		
-
 		window.clipboardData.setData('Text','<table>' + rptTblH.innerHTML + '</table>');
 		sh.Paste(sh.Cells(3, 1));
 		sh.Rows('3:3').RowHeight = 60;
@@ -551,16 +567,8 @@ function PrintReport()
 	setTimeout(doPrint, 500); 
 } 
 
-/*function showNagon(dt1, dt2, otch, road, depo, tab_num, skp, doljn, train_num, train_num_beg, train_num_end, nagon, vd)
-{
-	url = URLproval + dt1 + dt2 + otch+ road + depo + tab_num + skp + doljn + train_num + train_num_end + nagon + vd;
-	window.open(url);
-}
-*/
-
 function showNagon(dt1, dt2, otch, road, depo, tab_num, skp, doljn, train_num, train_num_beg, train_num_end, nagon, vd, itogi, year, month)
 {
 	url = URLproval + dt1 + dt2 + otch + road + depo + tab_num + skp + doljn + train_num + train_num_beg + train_num_end + nagon + vd + itogi + year + month;
 	window.open(url);
 }
-
